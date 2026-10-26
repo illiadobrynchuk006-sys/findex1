@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>findex — Пошук документів</title>
+<style>
+body{font:16px system-ui,sans-serif;background:#f7f8fa;color:#16243a;margin:0}
+main{max-width:850px;margin:50px auto;padding:24px}
+form{display:flex;gap:10px;flex-wrap:wrap}
+input,select,button{padding:12px;border:1px solid #ccd4de;border-radius:8px}
+input{flex:1;min-width:200px}button{background:#1764d8;color:#fff;cursor:pointer}
+article{background:white;padding:18px;margin-top:12px;border:1px solid #e0e5eb;border-radius:10px}
+small{color:#60718a}mark{background:#fff0a8}nav{margin-top:20px}nav button{margin-right:10px}
+</style></head><body><main>
+<h1>findex</h1><p>Пошук у текстовому корпусі</p>
+<form id="search"><input name="q" required placeholder="Введіть запит (AND, OR, NOT)" aria-label="Запит">
+<select name="scorer"><option value="bm25">BM25</option><option value="tfidf">TF-IDF</option></select>
+<button>Знайти</button></form>
+<p id="status"></p><section id="results"></section><nav id="pager"></nav>
+<script>
+const form=document.querySelector('#search'), results=document.querySelector('#results');
+const status=document.querySelector('#status'), pager=document.querySelector('#pager');
+let page=1;
+function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function go(p=1){
+page=p;const params=new URLSearchParams(new FormData(form));params.set('page',p);
+status.textContent='Пошук...';results.replaceChildren();pager.replaceChildren();
+try{const response=await fetch('/search?'+params);
+const data=await response.json();if(!response.ok)throw Error(JSON.stringify(data.detail));
+status.textContent='Знайдені результати: '+data.results.length;
+for(const item of data.results){
+const a=document.createElement('article'),link=document.createElement('a');
+link.href='/docs/'+item.doc_id.split('/').map(encodeURIComponent).join('/');
+link.textContent=item.doc_id;a.append(link);
+const score=document.createElement('small');score.textContent=' — '+item.score.toFixed(3);a.append(score);
+const text=document.createElement('p');text.textContent=item.snippet;a.append(text);results.append(a);}
+if(p>1){const prev=document.createElement('button');prev.textContent='Назад';prev.onclick=()=>go(p-1);pager.append(prev);}
+if(data.results.length===10){const next=document.createElement('button');next.textContent='Далі';next.onclick=()=>go(p+1);pager.append(next);}
+}catch(err){status.textContent='Помилка: '+err.message;}
+}
+form.addEventListener('submit',e=>{e.preventDefault();go(1);});
+</script></main></body></html>
