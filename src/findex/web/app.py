@@ -18,6 +18,7 @@ from starlette.concurrency import run_in_threadpool
 from findex.index import load_binary
 from findex.model import Index
 from findex.rank import Scorer, snippet
+from findex.query import evaluate, parse
 
 logger = logging.getLogger(__name__)
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
@@ -118,12 +119,13 @@ def search(
 ):
     try:
         # Search engine currently exposes top-k rather than all hits.
-        hits = scorer_instance.search(q, method=scorer, top_k=page * 10 + 1)
+        total = len(evaluate(parse(q), scorer_instance.index))
+        hits = scorer_instance.search(q, method=scorer, top_k=page * 10)
         results = [
             SearchItem(doc_id=h.doc_id, score=h.score, snippet=snippet(h.path, q.split()))
             for h in hits[(page - 1) * 10 : page * 10]
         ]
-        return SearchResponse(q=q, page=page, total=len(hits), results=results)
+        return SearchResponse(q=q, page=page, total=total, results=results)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
