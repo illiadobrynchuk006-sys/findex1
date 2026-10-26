@@ -8,7 +8,7 @@ import random
 import time
 from collections import defaultdict
 from collections.abc import AsyncIterator
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urldefrag, urljoin, urlsplit, urlunsplit
@@ -60,9 +60,10 @@ class Page:
     status: int
     text: str
     elapsed: float
+    links: tuple[str, ...] = ()
 
     def as_json(self) -> str:
-        return json.dumps(self.__dict__, ensure_ascii=False)
+        return json.dumps(asdict(self), ensure_ascii=False)
 
 
 class RobotsCache:
@@ -119,7 +120,7 @@ async def fetch(
                 return None
             parser = PageParser()
             parser.feed(response.text)
-            return Page(url, response.status_code, " ".join(parser.words), elapsed)
+            return Page(url, response.status_code, " ".join(parser.words), elapsed, tuple(parser.links))
         except (httpx.TimeoutException, httpx.TransportError) as exc:
             logger.warning("fetch failure %s: %s", url, exc)
             if attempt == retries:
@@ -181,8 +182,18 @@ async def crawl(
                     if page is None:
                         continue
                     await results.put(page)
-                    # Links are extracted separately only on successful HTML responses.
-                    # Refetching is avoided by using a source-body helper below in later revisions.
+                    for href in page.links:
+                        try:
+                            target = canonical(urljoin(url, href))
+                        except (ValueError, UnicodeError):
+                            continue
+                        if urlsplit(target).hostname != host:
+                            continue
+                        async with lock:
+                            if target in seen or len(seen) >= max_pages:
+                                continue
+                            seen.add(target)
+                            queue.put_nowait(target)
                 finally:
                     queue.task_done()
 
