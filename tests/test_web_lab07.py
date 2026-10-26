@@ -52,6 +52,7 @@ def test_html(client):
     assert "findex" in r.text
 
 
-def test_health_unloaded():
+def test_health_unloaded(monkeypatch, tmp_path):
+    monkeypatch.setenv("INDEX_PATH", str(tmp_path / "missing-index.bin"))
     with TestClient(app) as client:
         assert client.get("/health").status_code == 503
