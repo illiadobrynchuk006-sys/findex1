@@ -56,3 +56,9 @@ def test_health_unloaded(monkeypatch, tmp_path):
     monkeypatch.setenv("INDEX_PATH", str(tmp_path / "missing-index.bin"))
     with TestClient(app) as client:
         assert client.get("/health").status_code == 503
+
+
+def test_async_search(client):
+    response = client.get("/search-async", params={"q": "python"})
+    assert response.status_code == 200
+    assert response.json()["results"][0]["doc_id"] == "a.txt"
