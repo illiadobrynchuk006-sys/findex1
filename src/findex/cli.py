@@ -12,7 +12,8 @@ from rich.console import Console
 from rich.progress import Progress
 from rich.table import Table
 
-from findex.index import build_index, load_binary, save_binary
+from findex.index import load_binary, save_binary
+from findex.parallel import build_parallel
 from findex.model import Index
 from findex.rank import Scorer, snippet
 
@@ -38,13 +39,17 @@ def callback(
 def index_command(
     data: Path = typer.Argument(..., help="Directory of .txt documents"),
     out: Path = typer.Option(Path("index.bin"), "--out", help="Output index"),
+    workers: int = typer.Option(1, "--workers", min=1),
+    executor: Literal["serial", "threads", "processes"] = typer.Option(
+        "serial", "--executor"
+    ),
 ) -> None:
     try:
         if not data.is_dir():
             raise ValueError(f"Corpus directory not found: {data}")
         with Progress(console=console) as progress:
             task = progress.add_task("Building index", total=None)
-            index_data = build_index(data)
+            index_data = build_parallel(data, workers=workers, executor=executor)
             progress.update(task, description="Saving index")
             out.parent.mkdir(parents=True, exist_ok=True)
             save_binary(index_data, out)
