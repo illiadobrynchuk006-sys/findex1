@@ -1,0 +1,33 @@
+         10019 function calls (10011 primitive calls) in 0.004 seconds
+
+   Ordered by: cumulative time
+   List reduced from 46 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.004    0.004 /workspaces/findex1/src/findex/rank.py:28(wrapper)
+        1    0.000    0.000    0.004    0.004 /workspaces/findex1/src/findex/rank.py:84(search)
+        1    0.000    0.000    0.004    0.004 /usr/local/python/3.14.2/lib/python3.14/heapq.py:537(nlargest)
+      251    0.000    0.000    0.003    0.000 /workspaces/findex1/src/findex/rank.py:101(<genexpr>)
+      250    0.000    0.000    0.003    0.000 {built-in method builtins.sum}
+     1000    0.000    0.000    0.003    0.000 /workspaces/findex1/src/findex/rank.py:103(<genexpr>)
+      750    0.001    0.000    0.002    0.000 /workspaces/findex1/src/findex/rank.py:72(bm25)
+      750    0.000    0.000    0.001    0.000 /workspaces/findex1/src/findex/model.py:38(df)
+      750    0.000    0.000    0.000    0.000 /workspaces/findex1/src/findex/model.py:29(num_docs)
+     1506    0.000    0.000    0.000    0.000 {method 'get' of 'dict' objects}
+      750    0.000    0.000    0.000    0.000 /workspaces/findex1/src/findex/rank.py:60(_frequencies)
+      5/1    0.000    0.000    0.000    0.000 /workspaces/findex1/src/findex/query.py:103(evaluate)
+     1519    0.000    0.000    0.000    0.000 {built-in method builtins.len}
+       34    0.000    0.000    0.000    0.000 {built-in method _heapq.heapreplace}
+      750    0.000    0.000    0.000    0.000 {built-in method math.log}
+      412    0.000    0.000    0.000    0.000 <string>:15(__lt__)
+        1    0.000    0.000    0.000    0.000 /workspaces/findex1/src/findex/query.py:41(parse)
+     1000    0.000    0.000    0.000    0.000 /workspaces/findex1/src/findex/model.py:41(documents)
+        1    0.000    0.000    0.000    0.000 /workspaces/findex1/src/findex/query.py:90(parse_or)
+        1    0.000    0.000    0.000    0.000 /workspaces/findex1/src/findex/query.py:83(parse_and)
+        3    0.000    0.000    0.000    0.000 /workspaces/findex1/src/findex/query.py:56(atom)
+      172    0.000    0.000    0.000    0.000 <string>:9(__eq__)
+        2    0.000    0.000    0.000    0.000 {method 'sort' of 'list' objects}
+        6    0.000    0.000    0.000    0.000 /workspaces/findex1/src/findex/tokenize.py:13(tokenize)
+        1    0.000    0.000    0.000    0.000 {built-in method _heapq.heapify}
+
+

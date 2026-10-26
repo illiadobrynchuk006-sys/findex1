@@ -1,0 +1,26 @@
+[
+  {
+    "engine": "python",
+    "method": "bm25",
+    "median_ms": 1.21357,
+    "repeats": 10
+  },
+  {
+    "engine": "numpy",
+    "method": "bm25",
+    "median_ms": 0.33549,
+    "repeats": 10
+  },
+  {
+    "engine": "python",
+    "method": "tfidf",
+    "median_ms": 1.03475,
+    "repeats": 10
+  },
+  {
+    "engine": "numpy",
+    "method": "tfidf",
+    "median_ms": 0.28139,
+    "repeats": 10
+  }
+]
