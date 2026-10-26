@@ -246,3 +246,63 @@ python scripts/evaluate_lab03.py data/demo/ judgments.json
 ## Здача
 
 Після запуску тестів, демонстрації пошуку й заповнення таблиці ручної оцінки зробіть тег `lab-03` із поточного `main`. Попередні теги `lab-01` і `lab-02` лишаються незмінними.
+
+
+---
+
+# Лабораторна №4 — типи, тести, пакування та CLI
+
+Версія проєкту: **0.4.0**. Команда встановлюється як `findex`.
+
+## Команди
+
+```bash
+python -m pip install -e .
+python -m pip install pytest hypothesis pyright ruff build
+findex --help
+findex index data/demo --out index.bin
+findex search index.bin "python AND пошук"
+findex search index.bin "python AND пошук" --json
+findex stats data/demo
+python -m pytest
+python -m ruff check .
+python -m pyright
+python -m build
+```
+
+`findex index` показує прогрес Rich (у stderr); `findex search` друкує таблицю Rich, `--json` — JSON-масив до stdout. Помилки відсутнього індексу та некоректного запиту виводяться одним рядком із ненульовим кодом завершення. `-v` можна повторювати для підвищення рівня логування.
+
+## Тести й CI
+
+- `tests/test_cli_lab04.py` перевіряє CLI включно з `--json`, відсутнім індексом і помилкою запиту.
+- `tests/test_properties_lab04.py` перевіряє через Hypothesis тотожність merge з операціями множин та відсортованість вхідних списків.
+- `.github/workflows/ci.yml` запускає встановлення, Ruff, pyright та pytest на push/PR.
+
+**Статус виконання:** необхідно запустити команди вище у Codespaces та перевірити статус CI; проходження strict pyright, Ruff і тестів поки не підтверджене. Зокрема, успадковані модулі з лабораторних №1–3 потребують повної типізації, щоб пройти strict без помилок.
+
+## Покриття
+
+Запустіть `python -m pip install pytest-cov` і `python -m pytest --cov=findex --cov-report=term-missing` для фактичного звіту покриття. Перенесіть отриманий відсоток у README перед здачею.
+
+## Публікація
+
+Після успішних CI та локальних перевірок згенеруйте wheel і перевірте встановлення в чистому оточенні:
+
+```bash
+python -m build
+python -m venv /tmp/findex-wheel-env
+/tmp/findex-wheel-env/bin/pip install dist/findex-0.4.0-py3-none-any.whl
+/tmp/findex-wheel-env/bin/findex --help
+```
+
+Потім створіть тег `lab-04`, тег версії `v0.4.0` та GitHub Release із прикріпленим wheel. Теги попередніх лабораторних не змінюйте.
+
+## Reflection
+
+- **Навіщо Protocol?** Дозволяє передавати різні реалізації з однаковими методами без спадкування.
+- **Навіщо strict pyright?** Виявляє неоднозначні типи, некоректні контракти та потенційні помилки до запуску.
+- **Чому property-based testing?** Hypothesis перевіряє інваріанти на багатьох автоматично генерованих прикладах.
+- **Чому `--json`?** Стандартизований вивід можна обробляти іншими програмами без парсингу оформлених таблиць.
+- **Чому wheel?** Встановлюваний пакет можна запускати з будь-якої робочої директорії.
+
+**Поточні відкриті вимоги:** повний strict typecheck, Protocol для Scorer та властивості серіалізації/постингів, coverage, CI badge, підтверджена збірка wheel і GitHub Release.
