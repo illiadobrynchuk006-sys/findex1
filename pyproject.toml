@@ -1,23 +1,32 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
 name = "findex"
-version = "0.1.0"
-description = "Lab 01: streaming text corpus and Unicode tokenizer"
+version = "0.4.0"
+description = "Corpus search with Boolean and ranked retrieval"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["typer>=0.12", "rich>=13"]
+
+[project.scripts]
+findex = "findex.cli:main"
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.9"]
+dev = ["pytest>=8", "hypothesis>=6", "ruff>=0.9", "pyright>=1.1", "build>=1"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["slow: tests exceeding one second"]
 
 [tool.ruff]
 line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+include = ["src/findex"]
+reportMissingTypeStubs = "none"
