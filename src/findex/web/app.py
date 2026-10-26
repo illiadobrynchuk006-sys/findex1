@@ -18,6 +18,7 @@ from starlette.concurrency import run_in_threadpool
 from findex.index import load_binary
 from findex.model import Index
 from findex.rank import Scorer, snippet
+from findex.numpy_rank import NumpyScorer
 from findex.query import evaluate, parse
 
 logger = logging.getLogger(__name__)
@@ -59,7 +60,7 @@ async def lifespan(app: FastAPI):
     app.state.index = None
 
 
-app = FastAPI(title="findex", version="0.7.0", lifespan=lifespan)
+app = FastAPI(title="findex", version="1.0.0", lifespan=lifespan)
 
 
 def get_index(request: Request) -> Index:
@@ -116,11 +117,13 @@ def search(
     q: Annotated[str, Query(min_length=1)],
     scorer: Literal["bm25", "tfidf"] = "bm25",
     page: Annotated[int, Query(ge=1)] = 1,
+    engine: Literal["python", "numpy"] = "python",
 ):
     try:
         # Search engine currently exposes top-k rather than all hits.
         total = len(evaluate(parse(q), scorer_instance.index))
-        hits = scorer_instance.search(q, method=scorer, top_k=page * 10)
+        ranker = NumpyScorer(scorer_instance.index) if engine == "numpy" else scorer_instance
+        hits = ranker.search(q, method=scorer, top_k=page * 10)
         results = [
             SearchItem(doc_id=h.doc_id, score=h.score, snippet=snippet(h.path, q.split()))
             for h in hits[(page - 1) * 10 : page * 10]
@@ -137,9 +140,10 @@ async def search_async(
     q: Annotated[str, Query(min_length=1)],
     scorer: Literal["bm25", "tfidf"] = "bm25",
     page: Annotated[int, Query(ge=1)] = 1,
+    engine: Literal["python", "numpy"] = "python",
 ):
     """Async route: offload CPU/blocking document I/O to a thread pool."""
-    return await run_in_threadpool(search, scorer_instance, q, scorer, page)
+    return await run_in_threadpool(search, scorer_instance, q, scorer, page, engine)
 
 
 @app.get("/", response_class=HTMLResponse)
