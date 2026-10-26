@@ -141,11 +141,11 @@ async def crawl(
         raise ValueError("Invalid crawler limits")
     origin = canonical(start_url)
     host = urlsplit(origin).hostname
-    user_agent = "findex-course-crawler/0.6 (+mailto:student@example.org)"
+    user_agent = "findex-course-crawler/0.6 (+https://github.com/illiadobrynchuk006-sys/findex1)"
     own_client = client is None
     if own_client:
         client = httpx.AsyncClient(
-            timeout=httpx.Timeout(10), follow_redirects=True,
+            timeout=httpx.Timeout(10), follow_redirects=False,
             headers={"User-Agent": user_agent}, max_redirects=5,
         )
     assert client is not None
