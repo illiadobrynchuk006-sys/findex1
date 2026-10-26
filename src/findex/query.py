@@ -1,32 +1,42 @@
 """Recursive-descent query parser: AND, OR, NOT, parentheses, quoted phrases."""
+
 from __future__ import annotations
+
 import re
 from dataclasses import dataclass
+
 from findex.tokenize import tokenize
+
 
 @dataclass(frozen=True, slots=True)
 class Term:
     value: str
 
+
 @dataclass(frozen=True, slots=True)
 class Phrase:
     words: tuple[str, ...]
+
 
 @dataclass(frozen=True, slots=True)
 class And:
     left: object
     right: object
 
+
 @dataclass(frozen=True, slots=True)
 class Or:
     left: object
     right: object
 
+
 @dataclass(frozen=True, slots=True)
 class Not:
     child: object
 
+
 LEX = re.compile(r'\s*("[^"]*"|\(|\)|[^\s()"]+)')
+
 
 def parse(text: str):
     tokens = LEX.findall(text)
@@ -89,10 +99,13 @@ def parse(text: str):
         raise ValueError(f"Unexpected token {peek()!r}")
     return tree
 
+
 def evaluate(node, index):
     """Evaluate AST against document ID sets; phrase checks original documents."""
     from pathlib import Path
+
     from findex.tokenize import tokenize
+
     if isinstance(node, Term):
         return {doc for doc, _ in index.raw.postings.get(node.value, ())}
     if isinstance(node, Phrase):
@@ -105,7 +118,7 @@ def evaluate(node, index):
             text = Path(index.documents[doc_id].path).read_text(encoding="utf-8", errors="replace")
             tokens = list(tokenize(text))
             n = len(node.words)
-            if any(tuple(tokens[i:i+n]) == node.words for i in range(len(tokens)-n+1)):
+            if any(tuple(tokens[i : i + n]) == node.words for i in range(len(tokens) - n + 1)):
                 answer.add(doc_id)
         return answer
     if isinstance(node, Not):

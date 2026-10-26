@@ -1,10 +1,14 @@
 """Pythonic index wrapper: Mapping protocol, dunders and context manager."""
+
 from __future__ import annotations
-from collections.abc import Mapping, Iterator
+
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
+
 from findex.index import InvertedIndex, build_index
+
 
 class Index(Mapping[str, list[tuple[str, int]]]):
     def __init__(self, raw: InvertedIndex):
@@ -41,6 +45,7 @@ class Index(Mapping[str, list[tuple[str, int]]]):
     @classmethod
     def from_path(cls, path: Path) -> "Index":
         return cls(build_index(Path(path)))
+
 
 @contextmanager
 def open_index(path: Path):

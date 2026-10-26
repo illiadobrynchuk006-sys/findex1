@@ -1,26 +1,28 @@
 """TF-IDF/BM25 scoring, timed searches, cached queries and snippets."""
+
 from __future__ import annotations
+
 import argparse
 import heapq
 import logging
 import math
 import time
-from collections import Counter
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
 
 from findex.model import Index
 from findex.query import And, Not, Or, Phrase, Term, evaluate, parse
-from findex.tokenize import tokenize
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass(order=True, frozen=True, slots=True)
 class SearchResult:
     score: float
     doc_id: str
     path: str
+
 
 def timed(fn):
     @wraps(fn)
@@ -30,7 +32,9 @@ def timed(fn):
             return fn(*args, **kwargs)
         finally:
             logger.info("%s took %.6fs", fn.__name__, time.perf_counter() - start)
+
     return wrapper
+
 
 def query_terms(node):
     if isinstance(node, Term):
@@ -42,6 +46,7 @@ def query_terms(node):
     if isinstance(node, (And, Or)):
         return query_terms(node.left) + query_terms(node.right)
     return []
+
 
 class Scorer:
     def __init__(self, index: Index, *, k1: float = 1.5, b: float = 0.75):
@@ -93,12 +98,17 @@ class Scorer:
         score_fn = self.bm25 if method == "bm25" else self.tfidf
         ranked = heapq.nlargest(
             top_k,
-            (SearchResult(sum(score_fn(term, doc) for term in terms),
-                          doc, self.index.documents[doc].path) for doc in candidates),
+            (
+                SearchResult(
+                    sum(score_fn(term, doc) for term in terms), doc, self.index.documents[doc].path
+                )
+                for doc in candidates
+            ),
         )
         ranked.sort(key=lambda r: (-r.score, r.doc_id))
         self._cache[key] = tuple(ranked)
         return list(ranked)
+
 
 def snippet(path: str, terms: list[str], width=160) -> str:
     text = Path(path).read_text(encoding="utf-8", errors="replace")
@@ -108,7 +118,12 @@ def snippet(path: str, terms: list[str], width=160) -> str:
     pos = min(found) if found else 0
     start = max(0, pos - width // 2)
     end = min(len(text), start + width)
-    return ("…" if start else "") + text[start:end].replace("\n", " ") + ("…" if end < len(text) else "")
+    return (
+        ("…" if start else "")
+        + text[start:end].replace("\n", " ")
+        + ("…" if end < len(text) else "")
+    )
+
 
 def main():
     parser = argparse.ArgumentParser(description="Ranked retrieval using lab-03")
@@ -125,6 +140,7 @@ def main():
     tree = parse(args.query)
     for result in scorer.search(args.query, method=args.method, top_k=args.top):
         print(f"{result.score:.4f}\t{result.doc_id}\t{snippet(result.path, query_terms(tree))}")
+
 
 if __name__ == "__main__":
     main()

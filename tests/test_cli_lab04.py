@@ -1,9 +1,13 @@
 """CLI integration tests."""
+
 import json
+
 from typer.testing import CliRunner
+
 from findex.cli import app
 
 runner = CliRunner()
+
 
 def test_help():
     result = runner.invoke(app, ["--help"])
@@ -11,10 +15,12 @@ def test_help():
     assert "index" in result.stdout
     assert "search" in result.stdout
 
+
 def test_missing_index(tmp_path):
     result = runner.invoke(app, ["search", str(tmp_path / "missing.bin"), "python"])
     assert result.exit_code != 0
     assert "Error:" in result.output
+
 
 def test_roundtrip(tmp_path):
     docs = tmp_path / "docs"
@@ -30,6 +36,7 @@ def test_roundtrip(tmp_path):
     values = json.loads(result.stdout)
     assert [item["doc_id"] for item in values] == ["one.txt"]
     assert all("score" in item for item in values)
+
 
 def test_bad_query(tmp_path):
     docs = tmp_path / "docs"

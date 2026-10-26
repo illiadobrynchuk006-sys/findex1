@@ -1,11 +1,11 @@
 """Installed findex command-line interface."""
+
 from __future__ import annotations
 
 import json
 import logging
-import sys
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Literal
 
 import typer
 from rich.console import Console
@@ -22,11 +22,15 @@ log = logging.getLogger("findex")
 
 
 def _log(verbose: int) -> None:
-    logging.basicConfig(level=logging.DEBUG if verbose > 1 else logging.INFO if verbose else logging.WARNING)
+    logging.basicConfig(
+        level=logging.DEBUG if verbose > 1 else logging.INFO if verbose else logging.WARNING
+    )
 
 
 @app.callback()
-def callback(verbose: int = typer.Option(0, "-v", count=True, help="Increase diagnostic verbosity")) -> None:
+def callback(
+    verbose: int = typer.Option(0, "-v", count=True, help="Increase diagnostic verbosity"),
+) -> None:
     _log(verbose)
 
 
@@ -44,7 +48,9 @@ def index_command(
             progress.update(task, description="Saving index")
             out.parent.mkdir(parents=True, exist_ok=True)
             save_binary(index_data, out)
-        console.print(f"Indexed {len(index_data.documents)} documents, {len(index_data.postings)} terms → {out}")
+        console.print(
+            f"Indexed {len(index_data.documents)} documents, {len(index_data.postings)} terms → {out}"
+        )
     except (ValueError, OSError) as exc:
         log.error("%s", exc)
         typer.echo(f"Error: {exc}", err=True)
@@ -94,7 +100,9 @@ def stats_command(data: Path = typer.Argument(...)) -> None:
         if not data.is_dir():
             raise FileNotFoundError(data)
         result = analyze(data)
-        console.print(f"Documents: {result.documents}; tokens: {result.tokens}; vocabulary: {result.vocabulary}")
+        console.print(
+            f"Documents: {result.documents}; tokens: {result.tokens}; vocabulary: {result.vocabulary}"
+        )
     except (ValueError, OSError) as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(code=1) from exc

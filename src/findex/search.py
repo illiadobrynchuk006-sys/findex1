@@ -1,48 +1,63 @@
 """Boolean search over an inverted index."""
+
 from __future__ import annotations
+
 import argparse
 import time
 import tracemalloc
 from pathlib import Path
+
 from findex.index import load_binary, load_pickle
 from findex.tokenize import tokenize
+
 
 def merge_intersection(a, b):
     i = j = 0
     out = []
     while i < len(a) and j < len(b):
         if a[i] == b[j]:
-            out.append(a[i]); i += 1; j += 1
+            out.append(a[i])
+            i += 1
+            j += 1
         elif a[i] < b[j]:
             i += 1
         else:
             j += 1
     return out
 
+
 def merge_union(a, b):
     i = j = 0
     out = []
     while i < len(a) or j < len(b):
         if j == len(b) or (i < len(a) and a[i] < b[j]):
-            x = a[i]; i += 1
+            x = a[i]
+            i += 1
         elif i == len(a) or b[j] < a[i]:
-            x = b[j]; j += 1
+            x = b[j]
+            j += 1
         else:
-            x = a[i]; i += 1; j += 1
+            x = a[i]
+            i += 1
+            j += 1
         out.append(x)
     return out
+
 
 def merge_difference(a, b):
     i = j = 0
     out = []
     while i < len(a):
         if j == len(b) or a[i] < b[j]:
-            out.append(a[i]); i += 1
+            out.append(a[i])
+            i += 1
         elif a[i] == b[j]:
-            i += 1; j += 1
+            i += 1
+            j += 1
         else:
             j += 1
     return out
+
 
 def boolean_search(index, query, engine="merge"):
     if engine not in ("merge", "set"):
@@ -70,7 +85,9 @@ def boolean_search(index, query, engine="merge"):
         if result is None:
             result = merge_difference(sorted(index.documents), ids) if operator == "NOT" else ids
         elif engine == "merge":
-            result = {"AND": merge_intersection, "OR": merge_union, "NOT": merge_difference}[operator](result, ids)
+            result = {"AND": merge_intersection, "OR": merge_union, "NOT": merge_difference}[
+                operator
+            ](result, ids)
         else:
             a, b = set(result), set(ids)
             result = sorted({"AND": a & b, "OR": a | b, "NOT": a - b}[operator])
@@ -79,6 +96,7 @@ def boolean_search(index, query, engine="merge"):
     if expecting_term:
         raise ValueError("Query ends with operator")
     return result
+
 
 def main():
     p = argparse.ArgumentParser()
@@ -98,7 +116,8 @@ def main():
     for doc in matches[:50]:
         meta = idx.documents[doc]
         print(f"{doc}\tlen={meta.length}\t{meta.path}")
-    print(f"Time: {elapsed:.4f} s; peak: {peak/1048576:.3f} MiB")
+    print(f"Time: {elapsed:.4f} s; peak: {peak / 1048576:.3f} MiB")
+
 
 if __name__ == "__main__":
     main()

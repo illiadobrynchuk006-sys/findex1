@@ -57,7 +57,9 @@ def analyze(root: Path, limit: int | None = None, mode: str = "lazy") -> CorpusS
     return CorpusStats(document_count, token_count, len(counts), counts.most_common(50))
 
 
-def measure(root: Path, limit: int | None = None, mode: str = "lazy") -> tuple[CorpusStats, float, int]:
+def measure(
+    root: Path, limit: int | None = None, mode: str = "lazy"
+) -> tuple[CorpusStats, float, int]:
     """Measure wall time and peak traced Python memory for a single analysis."""
     tracemalloc.start()
     start = time.perf_counter()
@@ -73,7 +75,9 @@ def measure(root: Path, limit: int | None = None, mode: str = "lazy") -> tuple[C
 def main() -> None:
     parser = argparse.ArgumentParser(description="Статистика текстового корпусу")
     parser.add_argument("root", type=Path, help="Каталог із .txt документами")
-    parser.add_argument("--limit", type=int, default=None, help="Опрацювати тільки перші N документів")
+    parser.add_argument(
+        "--limit", type=int, default=None, help="Опрацювати тільки перші N документів"
+    )
     parser.add_argument("--mode", choices=("lazy", "eager"), default="lazy")
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
