@@ -1,0 +1,4 @@
+{"url": "http://127.0.0.1:8000", "route": "/search", "concurrency": 20, "requests": 100, "errors": 0, "wall_s": 0.8674, "rps": 115.28, "p50_ms": 114.026, "p95_ms": 315.314, "p99_ms": 390.763}
+{"url": "http://127.0.0.1:8000", "route": "/search-async", "concurrency": 20, "requests": 100, "errors": 100, "wall_s": 0.4058, "rps": 246.43, "p50_ms": 49.683, "p95_ms": 177.871, "p99_ms": 210.545}
+{"url": "http://127.0.0.1:8000", "route": "/search", "concurrency": 20, "requests": 100, "errors": 0, "wall_s": 0.7637, "rps": 130.94, "p50_ms": 106.265, "p95_ms": 293.623, "p99_ms": 415.029}
+{"url": "http://127.0.0.1:8000", "route": "/search-async", "concurrency": 20, "requests": 100, "errors": 0, "wall_s": 0.7134, "rps": 140.18, "p50_ms": 112.522, "p95_ms": 239.334, "p99_ms": 336.795}
