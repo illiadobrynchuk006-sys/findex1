@@ -138,6 +138,17 @@ def crawl_command(
         raise typer.Exit(code=1) from exc
 
 
+@app.command("serve")
+def serve_command(
+    port: int = typer.Option(8000, "--port", min=1, max=65535),
+    workers: int = typer.Option(1, "--workers", min=1),
+) -> None:
+    """Start the findex FastAPI application."""
+    import uvicorn
+
+    uvicorn.run("findex.web.app:app", host="0.0.0.0", port=port, workers=workers)
+
+
 def main() -> None:
     app()
 
