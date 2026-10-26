@@ -197,13 +197,31 @@ async def crawl(
                 finally:
                     queue.task_done()
 
-        async with asyncio.TaskGroup() as group:
-            tasks = [group.create_task(worker()) for _ in range(concurrency)]
-            await queue.join()
-            for task in tasks:
-                task.cancel()
-        while not results.empty():
-            yield results.get_nowait()
+        async def supervise() -> None:
+            async with asyncio.TaskGroup() as group:
+                tasks = [group.create_task(worker()) for _ in range(concurrency)]
+                await queue.join()
+                for task in tasks:
+                    task.cancel()
+
+        supervisor = asyncio.create_task(supervise())
+        try:
+            while True:
+                if supervisor.done() and results.empty():
+                    await supervisor
+                    break
+                try:
+                    page = await asyncio.wait_for(results.get(), timeout=0.1)
+                except asyncio.TimeoutError:
+                    continue
+                yield page
+        finally:
+            if not supervisor.done():
+                supervisor.cancel()
+            try:
+                await supervisor
+            except asyncio.CancelledError:
+                pass
     finally:
         if own_client:
             await client.aclose()
