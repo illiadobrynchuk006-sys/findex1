@@ -306,3 +306,64 @@ python -m venv /tmp/findex-wheel-env
 - **Чому wheel?** Встановлюваний пакет можна запускати з будь-якої робочої директорії.
 
 **Поточні відкриті вимоги:** повний strict typecheck, Protocol для Scorer та властивості серіалізації/постингів, coverage, CI badge, підтверджена збірка wheel і GitHub Release.
+
+
+---
+
+# Лабораторна №5 — Конкурентність і GIL
+
+Додано `src/findex/parallel.py` (модульний воркер `build_partial`, детерміноване `merge`,
+`build_parallel`) і прапорці CLI `--workers N --executor {serial,threads,processes}`.
+Шляхи передаються воркерам замість прочитаних документів. Для процесів використовується
+`multiprocessing.get_context("spawn")`, а помилки `executor.map` передаються викликачу.
+
+## Демонстрація
+
+```bash
+git switch main
+git pull origin main
+python -m pip install -e .
+python -m pip install pytest matplotlib psutil
+python scripts/generate_demo_corpus.py
+findex index data/demo --out serial.bin --workers 1 --executor serial
+findex index data/demo --out threads.bin --workers 4 --executor threads
+findex index data/demo --out processes.bin --workers 4 --executor processes
+python -m pytest tests/test_parallel_lab05.py
+python scripts/benchmark_lab05.py data/demo --repeats 3
+```
+
+Бенчмарк створить `benchmarks/lab05/measurements.csv` та `speedup.png`.
+Після запуску додайте фактичні результати й графік у GitHub, підставте дані в таблицю нижче.
+Мінімум три повтори на кожну конфігурацію (медіани).
+`serial/1` використовується як база для прискорення.
+`os.cpu_count()` визначає додаткову точку з кількістю логічних CPU.
+
+| Executor | Workers | Wall, s | CPU, s | RSS, KiB | Speedup |
+|---|---:|---:|---:|---:|---:|
+| serial | 1,2,4,8,cpu_count | запустити | запустити | запустити | запустити |
+| threads | 1,2,4,8,cpu_count | запустити | запустити | запустити | запустити |
+| processes | 1,2,4,8,cpu_count | запустити | запустити | запустити | запустити |
+
+**Обмеження поточного бенчмарка:** CPU вимірюється для батьківського процесу,
+RSS — наприкінці батьківського процесу; загальний CPU і піковий RSS дочірніх процесів
+цими числами **не охоплені**. Для коректного порівняння процесів потрібен
+додатковий моніторинг усієї групи процесів. Виміри на користувацькому корпусі
+поки що не виконані.
+
+## GIL — пояснення
+
+- За звичайного CPython із GIL потоки не виконують Python bytecode CPU-bound
+  паралельно; тому індексація з активною токенізацією може не прискоритися.
+- Процеси мають окремі інтерпретатори й можуть працювати на кількох ядрах,
+  але запуск, серіалізація даних та об'єднання постингів додають накладні витрати.
+- Для операцій очікування I/O потоки часто доречніші.
+- Закон Амдала: якщо частка роботи залишається послідовною, прискорення має межу.
+- Збірка CPython 3.13 free-threaded без GIL (опційний експеримент) перевіряється
+  через `sys._is_gil_enabled()`, якщо метод доступний.
+
+## Перевірки
+
+`tests/test_parallel_lab05.py` порівнює serial/threads/processes,
+перевіряє відсортованість, інваріант merge, дублікати doc_id та помилки воркера.
+Після успішного запуску, доповнення замірів і README можна створювати тег `lab-05`.
+Теги попередніх лабораторних не змінюються.
