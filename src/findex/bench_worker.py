@@ -1,14 +1,18 @@
-"""Isolated benchmark worker measuring process-family CPU and peak RSS."""
+"""Isolated worker: wall time, CPU of parent and children, and RSS high water mark."""
 from __future__ import annotations
 
 import argparse
-import os
+import resource
 import time
 from pathlib import Path
 
-import psutil
-
 from findex.parallel import build_parallel
+
+
+def cpu_time() -> float:
+    parent = resource.getrusage(resource.RUSAGE_SELF)
+    children = resource.getrusage(resource.RUSAGE_CHILDREN)
+    return parent.ru_utime + parent.ru_stime + children.ru_utime + children.ru_stime
 
 
 def main() -> None:
@@ -17,19 +21,18 @@ def main() -> None:
     parser.add_argument("--executor", choices=["serial", "threads", "processes"])
     parser.add_argument("--workers", type=int, default=1)
     args = parser.parse_args()
-
-    parent = psutil.Process(os.getpid())
-    max_rss = 0
-    cpu_before = time.process_time()
-    wall_before = time.perf_counter()
-    # Captures parent; child process peaks should also be profiled externally
-    # if exact short-lived process peaks are needed.
+    before_cpu = cpu_time()
+    before_wall = time.perf_counter()
     index = build_parallel(args.corpus, args.workers, args.executor)
-    wall = time.perf_counter() - wall_before
-    cpu = time.process_time() - cpu_before
-    max_rss = parent.memory_info().rss // 1024
+    wall = time.perf_counter() - before_wall
+    cpu = cpu_time() - before_cpu
+    parent_rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    child_rss = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss
+    # Linux maxrss is KiB. These are separate process high-water marks;
+    # max(parent, child) is not combined simultaneous memory use.
+    rss = max(parent_rss, child_rss)
     assert index.documents is not None
-    print(f"{wall:.9f},{cpu:.9f},{max_rss}")
+    print(f"{wall:.9f},{cpu:.9f},{rss}")
 
 
 if __name__ == "__main__":
