@@ -537,3 +537,28 @@ p50, p95, p99. Цих експериментів ще **не виконано** 
 **Для повної здачі:** перевірити тести, зробити sync/async бенчмарки,
 опублікувати живу адресу на початку README, отримати віддалені p50/p95/p99
 та створити тег `lab-07`. Теги попередніх робіт не змінюються.
+
+
+## Lab 07 — HTTP load measurements
+
+Use the included `scripts/benchmark_lab07.py` to collect **actual** p50/p95/p99 for
+20 concurrent clients. The sync `/search` endpoint is a normal `def` route,
+and `/search-async` is an `async def` route which offloads synchronous search
+and file I/O into the threadpool; this avoids blocking the event loop, but does
+not magically bypass Python's GIL for CPU-bound ranking.
+
+```bash
+# From a fresh Codespaces shell
+python -m pip install -e .
+export INDEX_PATH="$PWD/index.bin"
+findex serve --port 8000 --workers 1
+# In a separate terminal:
+python scripts/benchmark_lab07.py http://127.0.0.1:8000 --route /search
+python scripts/benchmark_lab07.py http://127.0.0.1:8000 --route /search-async
+# Repeat with --workers 4, restarting the server, and with deployed HTTPS URL.
+```
+
+Measurements are appended to `benchmarks/lab07/results.jsonl`; copy the real
+p50/p95/p99 into the performance table. **No deployment URL or actual latency
+measurements are available yet.** Do not treat Codespaces preview URLs as
+permanently hosted production services. Do not publish sensitive documents.
