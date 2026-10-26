@@ -130,6 +130,18 @@ def search(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
+
+@app.get("/search-async", response_model=SearchResponse)
+async def search_async(
+    scorer_instance: Annotated[Scorer, Depends(get_scorer)],
+    q: Annotated[str, Query(min_length=1)],
+    scorer: Literal["bm25", "tfidf"] = "bm25",
+    page: Annotated[int, Query(ge=1)] = 1,
+):
+    """Async route: offload CPU/blocking document I/O to a thread pool."""
+    return await run_in_threadpool(search, scorer_instance, q, scorer, page)
+
+
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     return templates.TemplateResponse(request, "home.html", {})
