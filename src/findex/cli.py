@@ -16,6 +16,7 @@ from findex.index import load_binary, save_binary
 from findex.parallel import build_parallel
 from findex.model import Index
 from findex.rank import Scorer, snippet
+from findex.numpy_rank import NumpyScorer
 
 app = typer.Typer(no_args_is_help=True, help="findex: corpus indexing and ranked search")
 console = Console(stderr=True)
@@ -69,12 +70,14 @@ def search_command(
     scorer: Literal["bm25", "tfidf"] = typer.Option("bm25", "--scorer"),
     top: int = typer.Option(5, "--top", min=0),
     as_json: bool = typer.Option(False, "--json", help="Machine-readable stdout"),
+    engine: Literal["python", "numpy"] = typer.Option("python", "--engine"),
 ) -> None:
     try:
         if not index_file.is_file():
             raise FileNotFoundError(index_file)
         index = Index(load_binary(index_file))
-        hits = Scorer(index).search(query, method=scorer, top_k=top)
+        ranker = NumpyScorer(index) if engine == "numpy" else Scorer(index)
+        hits = ranker.search(query, method=scorer, top_k=top)
         rows = [{"doc_id": h.doc_id, "score": round(h.score, 6), "path": h.path} for h in hits]
         if as_json:
             typer.echo(json.dumps(rows, ensure_ascii=False))
